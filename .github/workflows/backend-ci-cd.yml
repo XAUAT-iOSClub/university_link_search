@@ -198,7 +198,6 @@ jobs:
           fingerprint: ${{ secrets.SSH_HOST_FINGERPRINT }}
           envs: IMAGE,USE_MIRROR,MIRROR_USER,MIRROR_PASSWORD,REGISTRY_USER,REGISTRY_TOKEN
           command_timeout: 20m
-          script_stop: true
           script: |
             set -eu
             cd ~/universitylink
