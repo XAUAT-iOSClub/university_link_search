@@ -1,0 +1,12 @@
+services:
+  app:
+    image: ${IMAGE:?IMAGE must be set to an immutable image tag}
+    container_name: universitylink-webapi
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_HTTP_PORTS: 8080
+    ports:
+      - "${APP_PORT:-8080}:8080"
