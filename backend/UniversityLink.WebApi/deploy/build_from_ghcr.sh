@@ -6,18 +6,23 @@ SERVICE_NAME="app"
 DEFAULT_IMAGE="ghcr.io/${GITHUB_REPOSITORY:-xauat-iosclub/university_link_search}-backend:latest"
 IMAGE="${IMAGE:-${1:-$DEFAULT_IMAGE}}"
 REGISTRY_HOST="${IMAGE%%/*}"
-APP_PORT="${APP_PORT:-8080}"
+APP_PORT="${APP_PORT:-}"
 READY_TIMEOUT="${READY_TIMEOUT:-60}"
 COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-universitylink-webapi}"
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-export IMAGE APP_PORT COMPOSE_PROJECT_NAME
+export IMAGE COMPOSE_PROJECT_NAME
 command -v docker >/dev/null 2>&1 || { echo "错误：未找到 docker。" >&2; exit 1; }
 docker compose version >/dev/null 2>&1 || { echo "错误：需要 docker compose v2。" >&2; exit 1; }
-[[ "$APP_PORT" =~ ^[0-9]+$ ]] && (( APP_PORT >= 1 && APP_PORT <= 65535 )) || {
-  echo "错误：APP_PORT 必须是 1 到 65535 之间的端口号。" >&2; exit 1;
-}
+# 仅当调用方显式传入时覆盖端口；否则让 compose 读取 .env 中的 APP_PORT（默认 8080）。
+# 若在这里无条件 export，环境变量优先级高于 .env，会覆盖运维配置的端口。
+if [[ -n "$APP_PORT" ]]; then
+  [[ "$APP_PORT" =~ ^[0-9]+$ ]] && (( APP_PORT >= 1 && APP_PORT <= 65535 )) || {
+    echo "错误：APP_PORT 必须是 1 到 65535 之间的端口号。" >&2; exit 1;
+  }
+  export APP_PORT
+fi
 [[ -f .env ]] || { echo "错误：请先在 deploy 目录创建 .env。" >&2; exit 1; }
 # SQL 为空时应用会退回容器内 SQLite，容器一重建数据就丢，生产环境必须显式配置 PostgreSQL。
 grep -Eq '^[[:space:]]*SQL[[:space:]]*=[[:space:]]*[^[:space:]]+' .env || {
@@ -73,7 +78,7 @@ if (( ! ready )); then
 fi
 
 docker image prune --force >/dev/null
-echo "==> 部署完成：$IMAGE（宿主机端口 $APP_PORT）"
+echo "==> 部署完成：$IMAGE（宿主机端口 ${APP_PORT:-见 .env 中的 APP_PORT，默认 8080}）"
 echo "    日志：docker logs -f $CONTAINER_NAME"
 if [[ -n "$previous_image" && "$previous_image" != "$IMAGE" ]]; then
   echo "    回滚：$0 $previous_image"

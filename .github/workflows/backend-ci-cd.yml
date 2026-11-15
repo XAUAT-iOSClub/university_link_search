@@ -104,3 +104,111 @@ jobs:
           provenance: false
           cache-from: type=gha
         timeout-minutes: 40
+
+  deploy:
+    name: Deploy over SSH
+    needs: [publish]
+    if: >-
+      needs.publish.result == 'success' &&
+      (github.event_name == 'workflow_dispatch' ||
+       (github.event_name == 'push' && github.ref == 'refs/heads/master'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    permissions:
+      contents: read
+      packages: read
+    concurrency:
+      group: university-link-production-deploy
+      cancel-in-progress: false
+    steps:
+      # scp-action 从工作区打包文件，部署 job 必须先 checkout。
+      - uses: actions/checkout@v4
+      # 与 LuckyVerify 一致：SSH 配置齐全才部署，缺失时只推送镜像并给出提示。
+      # secrets 不能在 job 级 if 中使用，所以在步骤内探测；job 声明 environment 才能读到环境级 secrets。
+      - name: Detect SSH deployment secrets
+        id: detect
+        shell: bash
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          if [[ -n "$SSH_HOST" && -n "$SSH_USER" && -n "$SSH_PRIVATE_KEY" ]]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=跳过自动部署::未配置 SSH_HOST / SSH_USER / SSH_PRIVATE_KEY；镜像已推送，可继续手动执行 deploy/build_from_ghcr.sh。"
+          fi
+      # 配置了镜像仓库时优先从镜像仓库拉取（服务器通常无法稳定访问 GHCR）。
+      - name: Resolve deployment image
+        id: image
+        shell: bash
+        run: |
+          repository="$(echo "$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]')"
+          name="${repository##*/}-backend"
+          if [[ -n "$MIRROR_REGISTRY" && -n "$MIRROR_NAMESPACE" ]]; then
+            echo "ref=${MIRROR_REGISTRY}/${MIRROR_NAMESPACE}/${name}:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+            echo "mirror=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=ghcr.io/${repository}-backend:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+            echo "mirror=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Create deployment directory
+        if: steps.detect.outputs.enabled == 'true'
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          fingerprint: ${{ secrets.SSH_HOST_FINGERPRINT }}
+          script: mkdir -p ~/universitylink
+      # 只同步 deploy/ 目录；含密钥的 .env 由运维在服务器上维护，绝不经过工作流。
+      - name: Upload deployment definitions
+        if: steps.detect.outputs.enabled == 'true'
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          fingerprint: ${{ secrets.SSH_HOST_FINGERPRINT }}
+          source: backend/UniversityLink.WebApi/deploy
+          target: ~/universitylink
+          strip_components: 3
+      - name: Pull and restart
+        if: steps.detect.outputs.enabled == 'true'
+        uses: appleboy/ssh-action@v1.2.2
+        env:
+          IMAGE: ${{ steps.image.outputs.ref }}
+          USE_MIRROR: ${{ steps.image.outputs.mirror }}
+          MIRROR_USER: ${{ secrets.MIRROR_USERNAME }}
+          MIRROR_PASSWORD: ${{ secrets.MIRROR_PASSWORD }}
+          REGISTRY_USER: ${{ github.actor }}
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          fingerprint: ${{ secrets.SSH_HOST_FINGERPRINT }}
+          envs: IMAGE,USE_MIRROR,MIRROR_USER,MIRROR_PASSWORD,REGISTRY_USER,REGISTRY_TOKEN
+          command_timeout: 20m
+          script_stop: true
+          script: |
+            set -eu
+            cd ~/universitylink
+            if [ "$USE_MIRROR" = "true" ]; then
+              PULL_USERNAME="${MIRROR_USER:-}"
+              PULL_TOKEN="${MIRROR_PASSWORD:-}"
+            else
+              PULL_USERNAME="$REGISTRY_USER"
+              PULL_TOKEN="$REGISTRY_TOKEN"
+            fi
+            # build_from_ghcr.sh 在 PULL_TOKEN 存在时临时登录对应仓库，退出时自动登出。
+            export IMAGE PULL_USERNAME PULL_TOKEN
+            bash ./build_from_ghcr.sh
