@@ -15,10 +15,12 @@
 - `SSH_PASSPHRASE`（按需）：私钥密码。
 - `SSH_PORT`（按需）：非 22 端口。
 - `MIRROR_USERNAME` / `MIRROR_PASSWORD`（按需）：私有镜像仓库凭证。
+- `APP_PORT`（按需，Variable 而非 Secret）：宿主机映射端口。设置后由工作流传给部署脚本，
+  优先级高于服务器 `.env`；不设置则沿用 `.env` 中的 `APP_PORT`（默认 `8080`）。
 
 缺少三个必需 secrets 时，工作流只推送镜像并输出跳过提示，不会尝试连接服务器。
 
-首次部署前，在服务器准备 `~/universitylink/.env`（可从 `backend/UniversityLink.WebApi/deploy/.env.example` 复制，至少配置 `SQL`、`JWT_SECRET` 和 OAuth 凭据，按需 `APP_PORT`），并确保部署用户可以运行 Docker 和 Docker Compose v2。之后每次部署，工作流会把 `backend/UniversityLink.WebApi/deploy/` 同步到 `~/universitylink/`，以本次提交 SHA 的镜像执行 `build_from_ghcr.sh`，重启容器并确认应用已启动。`.env` 含密钥，始终由运维在服务器维护，不经过 CI。
+首次部署前，在服务器准备 `~/universitylink/.env`（可从 `backend/UniversityLink.WebApi/deploy/.env.example` 复制，至少配置 `SQL`、`JWT_SECRET` 和 OAuth 凭据，按需 `APP_PORT`），并确保部署用户可以运行 Docker 和 Docker Compose v2。之后每次部署，工作流会把 `backend/UniversityLink.WebApi/deploy/` 同步到 `~/universitylink/`，以本次提交 SHA 的镜像执行 `build_from_ghcr.sh`，重启容器并确认应用已启动。`.env` 含密钥，始终由运维在服务器维护，不经过 CI。宿主机端口以服务器 `.env` 的 `APP_PORT` 为准；想由 CI 统一控制时，在仓库/环境 Variables 中设置 `APP_PORT` 即可覆盖它。
 
 ### 手动部署与回滚
 

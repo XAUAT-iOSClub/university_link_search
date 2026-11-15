@@ -189,6 +189,9 @@ jobs:
           MIRROR_PASSWORD: ${{ secrets.MIRROR_PASSWORD }}
           REGISTRY_USER: ${{ github.actor }}
           REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # 可选：仓库/环境 Variables 里的 APP_PORT 覆盖服务器 .env 中的宿主机端口。
+          # 未配置时这里是空串，脚本会 unset 它以继续沿用服务器 .env。
+          APP_PORT: ${{ vars.APP_PORT }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
@@ -196,7 +199,7 @@ jobs:
           passphrase: ${{ secrets.SSH_PASSPHRASE }}
           port: ${{ secrets.SSH_PORT || 22 }}
           fingerprint: ${{ secrets.SSH_HOST_FINGERPRINT }}
-          envs: IMAGE,USE_MIRROR,MIRROR_USER,MIRROR_PASSWORD,REGISTRY_USER,REGISTRY_TOKEN
+          envs: IMAGE,USE_MIRROR,MIRROR_USER,MIRROR_PASSWORD,REGISTRY_USER,REGISTRY_TOKEN,APP_PORT
           command_timeout: 20m
           script: |
             set -eu
