@@ -107,10 +107,13 @@
 }
 
 html, body {
-    font-family: PingFang SC, Helvetica, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "PingFang SC",
+        "Helvetica Neue", Helvetica, sans-serif;
     background-size: auto;
     background-repeat: no-repeat;
     background-position: initial;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 .icon {
@@ -178,5 +181,73 @@ html, body {
 
     .phone-desktop-flex {
         display: flex !important;
+    }
+}
+
+/* ==========================================================================
+   Apple / Sonoma 设计 token
+   ========================================================================== */
+
+:root {
+    --canvas: #f5f5f7;
+    --glass: rgba(255, 255, 255, 0.55);
+    --glass-strong: rgba(255, 255, 255, 0.74);
+    --glass-border: rgba(255, 255, 255, 0.68);
+    --hairline: rgba(0, 0, 0, 0.08);
+    --ink: #1d1d1f;
+    --ink-2: #6e6e73;
+    --accent: #0071e3;
+    --accent-soft: rgba(0, 113, 227, 0.16);
+    --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 12px 32px rgba(15, 23, 42, 0.07);
+    --shadow-card-hover: 0 2px 4px rgba(15, 23, 42, 0.05), 0 22px 52px rgba(15, 23, 42, 0.12);
+    --ease-apple: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.dark {
+    --canvas: #000000;
+    --glass: rgba(28, 28, 30, 0.52);
+    --glass-strong: rgba(28, 28, 30, 0.74);
+    --glass-border: rgba(255, 255, 255, 0.10);
+    --hairline: rgba(255, 255, 255, 0.10);
+    --ink: #f5f5f7;
+    --ink-2: #a1a1a6;
+    --accent: #0a84ff;
+    --accent-soft: rgba(10, 132, 255, 0.22);
+    --shadow-card: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 16px 40px rgba(0, 0, 0, 0.45);
+    --shadow-card-hover: inset 0 1px 0 rgba(255, 255, 255, 0.09), 0 24px 56px rgba(0, 0, 0, 0.55);
+}
+
+body {
+    background-color: var(--canvas);
+    color: var(--ink);
+    transition: background-color 0.4s ease;
+}
+
+::selection {
+    background: var(--accent-soft);
+}
+
+/* 统一入场动画：位移 + 淡入，节奏接近 Apple 的 spring-out */
+.apple-reveal {
+    opacity: 0;
+    animation: apple-rise 0.7s var(--ease-apple) forwards;
+    animation-delay: var(--delay, 0ms);
+}
+
+@keyframes apple-rise {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .apple-reveal {
+        animation: none;
+        opacity: 1;
     }
 }

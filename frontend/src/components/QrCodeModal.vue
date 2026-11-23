@@ -1,40 +1,31 @@
 <template>
   <Teleport to="body">
-    <div
-        v-if="show"
-        class="fixed inset-0 backdrop-blur-md bg-black/30 flex items-center justify-center z-50"
-        @click="closeModal"
-    >
-      <div
-          class="bg-white rounded-lg p-6 w-11/12 max-w-md mx-auto shadow-xl"
-          @click.stop
-      >
-        <!-- 标题区域 -->
-        <div class="flex items-center mb-5">
-          <IconFont
-              :type="`#icon-${currentLink.icon}`"
-              class="text-[40px]"
-          />
-          <h2 class="text-2xl font-bold">{{ currentLink?.name || '一卡通' }}</h2>
-        </div>
-
-        <!-- 内容区域 -->
-        <div class="text-center">
-          <p class="mb-4 text-lg">请使用微信扫码打开</p>
-
-          <!-- 二维码图片 -->
-          <div class="flex justify-center mb-6">
-            <img :src="qrCodeUrl" alt="QR Code" class="w-64 h-64"/>
+    <div v-if="show" class="sheet-backdrop" @click="closeModal">
+      <div class="sheet-panel qr-panel" @click.stop>
+        <div class="flex items-center gap-3">
+          <span v-if="currentLink?.icon" class="qr-icon">
+            <IconFont :type="`#icon-${currentLink.icon}`" :size="26" />
+          </span>
+          <div class="min-w-0 flex-1">
+            <h2 class="truncate text-[20px] font-semibold tracking-[-0.01em] text-[var(--ink)]">
+              {{ currentLink?.name || '扫码打开' }}
+            </h2>
+            <p class="mt-0.5 text-[12.5px] text-[var(--ink-2)]">请使用微信扫码打开</p>
           </div>
-
-          <!-- 按钮 -->
-          <button
-              class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-8 rounded-md transition-colors"
-              @click="closeModal"
-          >
-            OK
+          <button class="close-btn" aria-label="关闭" @click="closeModal">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
           </button>
         </div>
+
+        <div class="mt-6 flex justify-center">
+          <div class="qr-box">
+            <img :src="qrCodeUrl" alt="二维码" class="h-56 w-56" />
+          </div>
+        </div>
+
+        <button class="primary-btn" @click="closeModal">完成</button>
       </div>
     </div>
   </Teleport>
@@ -58,7 +49,11 @@ const qrCodeUrl = ref('');
 watch(() => props.currentLink, async (newLink) => {
   if (newLink?.url) {
     try {
-      qrCodeUrl.value = await QRCode.toDataURL(newLink.url);
+      qrCodeUrl.value = await QRCode.toDataURL(newLink.url, {
+        margin: 1,
+        width: 448,
+        color: { dark: '#1d1d1f', light: '#ffffff' }
+      });
     } catch (err) {
       console.error('QR Code generation error:', err);
     }
@@ -69,3 +64,125 @@ function closeModal() {
   emit('update:show', false);
 }
 </script>
+
+<style scoped>
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.22);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+}
+
+.dark .sheet-backdrop {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.sheet-panel {
+  width: 100%;
+  max-width: 380px;
+  padding: 26px;
+  border-radius: 28px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-strong);
+  box-shadow: 0 32px 80px rgba(15, 23, 42, 0.24);
+  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  backdrop-filter: blur(32px) saturate(180%);
+  animation: sheet-in 0.35s var(--ease-apple);
+}
+
+.dark .sheet-panel {
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.75);
+}
+
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.qr-icon {
+  display: flex;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.close-btn {
+  display: flex;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.055);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.dark .close-btn {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.close-btn:hover {
+  color: var(--ink);
+}
+
+.close-btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+.qr-box {
+  padding: 14px;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+.primary-btn {
+  width: 100%;
+  height: 48px;
+  margin-top: 24px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: filter 0.2s ease, transform 0.15s ease;
+}
+
+.primary-btn:hover {
+  filter: brightness(1.07);
+}
+
+.primary-btn:active {
+  transform: scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet-panel {
+    animation: none;
+  }
+}
+</style>

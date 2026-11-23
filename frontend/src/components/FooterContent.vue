@@ -1,71 +1,41 @@
 <template>
-  <div class="mx-auto px-8 md:px-16 pb-4 pt-8">
-    <footer class="bg-white/20 dark:bg-black/50 backdrop-blur-sm rounded-2xl  text-center p-8">
-      <p class="layout-footer-title mb-4">
-        &copy; 2025 iOS Club of XAUAT
-      </p>
-      <div class="flex justify-center">
-        <div class="flex items-center space-x-2 md:pl-2 desktop-phone-flex">
-          <a class="a" href="https://cn.xauat.edu.cn/" target="_blank">
-            西安建筑科技大学
-          </a>
-          <svg class="w-4 h-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-               stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-          </svg>
-        </div>
-        <div class="flex items-center md:space-x-2 md:pl-2 text-center">
-          <a class="a" href="https://beian.miit.gov.cn/" target="_blank">
-            备案号 陕ICP备2024031872号
-          </a>
-          <svg class="w-4 h-4 text-gray-500 desktop-phone" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-               stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-          </svg>
-        </div>
-        <div class="flex items-center space-x-2 md:pl-2 desktop-phone-flex">
-          <a class="a" href="https://gitee.com/XAUATiOSClub" target="_blank">
-            我们的Gitee组织
-          </a>
-          <svg class="w-4 h-4 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-               stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-          </svg>
-        </div>
-      </div>
+  <div class="relative z-10 mx-auto w-full max-w-[1240px] px-5 pb-10 pt-2 md:px-8">
+    <footer class="flex flex-col gap-4 border-t border-[var(--hairline)] pt-6 text-[13px] text-[var(--ink-2)] md:flex-row md:items-center md:justify-between">
+      <p>&copy; {{ currentYear }} iOS Club of XAUAT</p>
+
+      <nav class="flex flex-wrap items-center gap-x-5 gap-y-2">
+        <a class="footer-link" href="https://cn.xauat.edu.cn/" target="_blank" rel="noopener">
+          西安建筑科技大学
+        </a>
+        <a class="footer-link" href="https://gitee.com/XAUATiOSClub" target="_blank" rel="noopener">
+          Gitee 组织
+        </a>
+        <a class="footer-link" href="https://beian.miit.gov.cn/" target="_blank" rel="noopener">
+          陕ICP备2024031872号
+        </a>
+      </nav>
     </footer>
   </div>
 </template>
 
+<script setup lang="ts">
+const currentYear = new Date().getFullYear()
+</script>
+
 <style scoped>
-.layout-footer-title {
-  color: #f3f5f7;
-}
-
-.a {
-  color: #f3f5f7;
-  transition: .2s;
+.footer-link {
+  color: inherit;
   text-decoration: none;
-  background: linear-gradient(#07f2, #07f2) no-repeat center bottom / 100% 0;
+  transition: color 0.2s ease;
 }
 
-.a:hover {
-  color: #f3f5f7;
-  background: linear-gradient(#07f2, #07f2) no-repeat center bottom / 100% 100%;
-  border-radius: .2em;
+.footer-link:hover {
+  color: var(--accent);
 }
 
-@media (prefers-color-scheme: dark) {
-  .layout-footer-title {
-    color: #ffffff97;
-  }
-
-  .a {
-    color: #ffffff97;
-  }
-
-  .a:hover {
-    color: #ffffff97;
-  }
+.footer-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 4px;
 }
 </style>

@@ -1,32 +1,30 @@
 <template>
-  <div class="p-6 rounded-lg w-sm backdrop-blur-xs bg-white/50 dark:bg-black/50">
+  <div class="account-card">
     <template v-if="isLogin">
-      <p class="text-gray-700 dark:text-gray-300 text-xl font-bold text-center mb-1">{{username}}</p>
-
-      <!-- 副标题 -->
-      <p class="text-gray-500 dark:text-gray-100 text-center text-sm">
-        点击即可进入账号管理
-      </p>
-    </template>
-
-    <template v-else>
-      <!-- 头像占位符 -->
-      <div class="flex justify-center mb-1">
-        <Icon class="text-gray-600 dark:text-gray-200 text-4xl">
+      <div class="account-avatar account-avatar-active">
+        <Icon class="text-[26px]">
           <AccountCircleRound/>
         </Icon>
       </div>
+      <p class="mt-3 text-[17px] font-semibold text-[var(--ink)]">{{ username }}</p>
+      <p class="mt-1 text-[12.5px] text-[var(--ink-2)]">点击进入账号管理</p>
+    </template>
 
-      <!-- 主标题 -->
-      <p class="text-gray-700 dark:text-gray-300 text-xl font-bold text-center mb-1">您尚未登录</p>
-
-      <!-- 副标题 -->
-      <p class="text-gray-500 dark:text-gray-100 text-center text-sm">
-        登录后，即可云端同步您的个性化设置、网站捷径和便笺
+    <template v-else>
+      <div class="account-avatar">
+        <Icon class="text-[26px]">
+          <AccountCircleRound/>
+        </Icon>
+      </div>
+      <p class="mt-3 text-[17px] font-semibold text-[var(--ink)]">您尚未登录</p>
+      <p class="mt-1 text-[12.5px] leading-relaxed text-[var(--ink-2)]">
+        登录后可云端同步个性化设置、网站捷径和便笺
       </p>
+      <p class="mt-3 text-[11.5px] text-[var(--accent)]">点击图标登录</p>
     </template>
   </div>
 </template>
+
 <script setup lang="ts">
 import {AccountCircleRound} from '@vicons/material'
 import {Icon} from '@vicons/utils'
@@ -46,3 +44,42 @@ onMounted(() => {
   }
 })
 </script>
+
+<style scoped>
+.account-card {
+  width: 300px;
+  padding: 22px;
+  border-radius: 22px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-strong);
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.18);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  backdrop-filter: blur(30px) saturate(180%);
+  text-align: center;
+}
+
+.dark .account-card {
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7);
+}
+
+.account-avatar {
+  display: flex;
+  width: 52px;
+  height: 52px;
+  margin: 0 auto;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--ink-2);
+}
+
+.dark .account-avatar {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.account-avatar-active {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+</style>
